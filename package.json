@@ -1,0 +1,16 @@
+{
+  "name": "flutterwave-assessment",
+  "version": "1.0.0",
+  "description": "Flutterwave Node.js assessment: Create a simple rule-validation API.",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "author": "Kenneth Jimmy",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "morgan": "^1.10.0",
+    "validator": "^13.5.2"
+  }
+}
