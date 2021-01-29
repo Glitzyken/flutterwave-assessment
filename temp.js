@@ -24,3 +24,25 @@ if (typeof body.data != 'object') {
 }
 
 // console.log(`${property}: ${data[property]}`);
+
+res.status(200).json({
+  message: `field ${data} successfully validated.`,
+  status: 'success',
+  data: {
+    validation: {
+      error: false,
+      field: '[name of field]',
+      field_value: '[value of field]',
+      condition: '[rule condition]',
+      condition_value: '[condition value]',
+    },
+  },
+});
+if (data === undefined) {
+  console.log('data is undefined.');
+}
+return res.status(400).json({
+  message: 'field [name of field] is missing from data.',
+  status: 'error',
+  data: null,
+});
