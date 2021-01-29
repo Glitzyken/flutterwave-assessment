@@ -69,6 +69,67 @@ exports.validatePayload = (req, res, next) => {
   next();
 };
 
+exports.evaluateDataAndSendResult = (req, res, next) => {
+  let field = req.body.rule.field;
+  let data = req.body.data;
+
+  const condition = req.body.rule.condition;
+  const condition_value = req.body.rule.condition_value;
+
+  if (field.includes('.')) {
+    propList = field.split('.');
+    field = propList[0];
+
+    if (propList.length === 2) {
+      for (const property in data) {
+        if (field === property) {
+          console.log(`Match! 😃 at ${property}`);
+          data = data[property][propList[1]];
+          console.log(data);
+        }
+      }
+    } else if (propList.length === 3) {
+      for (const property in data) {
+        if (field === property) {
+          console.log(`Match! 😃 at ${property}`);
+          data = data[property][propList[1]][propList[2]];
+          console.log(data);
+        }
+      }
+    }
+  } else if (data === field) {
+    data = field;
+    console.log(data);
+  } else if (Array.isArray(data)) {
+    data = data.find((el) => el === field);
+    console.log(data);
+  }
+
+  // Evaluate Data and send correct response
+  if (condition === 'eq' && typeof condition_value == 'number') {
+    // do this...
+    if (parseInt(data) == condition_value) {
+      console.log('Data is equal to the condition value. ✔');
+    } else {
+      console.log('Data is not equal to the condition value. ❗');
+    }
+  } else if (condition === 'neq' && typeof condition_value == 'number') {
+    // do this...
+  } else if (condition === 'gt' && typeof condition_value == 'number') {
+    // do this...
+  } else if (condition === 'gte' && typeof condition_value == 'number') {
+    // do this...
+  } else if (condition === 'contains' && typeof condition_value == 'string') {
+    if (data.includes(condition_value)) {
+      console.log(`${data} contains ${condition_value}. ✔`);
+    } else {
+      console.log(`${data} does not contain ${condition_value}. ❗`);
+    }
+  }
+
+  next();
+};
+
 exports.sendResult = (req, res) => {
   const payload = req.body;
 

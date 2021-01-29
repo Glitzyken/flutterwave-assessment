@@ -22,3 +22,5 @@ if (typeof body.data != 'object') {
     data: null,
   });
 }
+
+// console.log(`${property}: ${data[property]}`);
