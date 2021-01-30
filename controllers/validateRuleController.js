@@ -63,42 +63,28 @@ const sendMissingDataError = (res, field) => {
 exports.validatePayload = (req, res, next) => {
   const body = req.body;
 
-  // Require required fields
+  // Require required fields and check for data types
   // - for Rule object and properties
   if (!body.rule) {
     sendRequiredResponse(res, 'rule');
     return;
-  }
-  if (!body.rule.field) {
-    sendRequiredResponse(res, 'rule.field');
-    return;
-  }
-  if (!body.rule.condition) {
-    sendRequiredResponse(res, 'rule.condition');
-    return;
-  }
-  if (!body.rule.condition_value) {
-    sendRequiredResponse(res, 'rule.condition_value');
-    return;
-  }
-
-  // - for Data object
-  if (!body.data) {
-    sendRequiredResponse(res, 'data');
-    return;
-  }
-
-  // Check data types
-  if (typeof body.rule != 'object') {
+  } else if (typeof body.rule != 'object') {
     sendTypeErrorMessage(res, 'rule should be an object.');
     return;
   }
 
-  if (typeof body.rule.field != 'string') {
+  if (!body.rule.field) {
+    sendRequiredResponse(res, 'rule.field');
+    return;
+  } else if (typeof body.rule.field != 'string') {
     sendTypeErrorMessage(res, 'rule.field should be a string.');
     return;
   }
-  if (
+
+  if (!body.rule.condition) {
+    sendRequiredResponse(res, 'rule.condition');
+    return;
+  } else if (
     body.rule.condition === 'eq' ||
     body.rule.condition === 'neq' ||
     body.rule.condition === 'gt' ||
@@ -114,21 +100,33 @@ exports.validatePayload = (req, res, next) => {
     return;
   }
 
+  if (!body.rule.condition_value) {
+    sendRequiredResponse(res, 'rule.condition_value');
+    return;
+  }
+
+  // - for Data object
+  if (!body.data) {
+    sendRequiredResponse(res, 'data');
+    return;
+  }
+
   // if everything is ok, move on to the next middleware
   next();
 };
 
 exports.evaluateDataAndSendResult = (req, res) => {
-  let field = req.body.rule.field;
+  let field;
   let data;
 
+  const ruleField = req.body.rule.field;
   const dataObj = req.body.data;
 
   const condition = req.body.rule.condition;
   const condition_value = req.body.rule.condition_value;
 
-  if (field.includes('.')) {
-    propList = field.split('.');
+  if (ruleField.includes('.')) {
+    let propList = ruleField.split('.');
     field = propList[0];
 
     if (propList.length === 2) {
@@ -144,10 +142,10 @@ exports.evaluateDataAndSendResult = (req, res) => {
         }
       }
     }
-  } else if (data === field) {
-    data = field;
-  } else if (Array.isArray(data)) {
-    data = data.find((el) => el === field);
+  } else if (Array.isArray(dataObj)) {
+    data = dataObj.find((el) => el === ruleField);
+  } else if (dataObj === ruleField) {
+    data = ruleField;
   }
 
   // Evaluate Data and send correct response
@@ -157,9 +155,9 @@ exports.evaluateDataAndSendResult = (req, res) => {
     data !== undefined
   ) {
     if (parseInt(data) === condition_value) {
-      sendSuccessResponse(res, field, data, condition, condition_value);
+      sendSuccessResponse(res, ruleField, data, condition, condition_value);
     } else {
-      sendFailResponse(res, field, data, condition, condition_value);
+      sendFailResponse(res, ruleField, data, condition, condition_value);
     }
   } else if (
     condition === 'neq' &&
@@ -167,9 +165,9 @@ exports.evaluateDataAndSendResult = (req, res) => {
     data !== undefined
   ) {
     if (parseInt(data) !== condition_value) {
-      sendSuccessResponse(res, field, data, condition, condition_value);
+      sendSuccessResponse(res, ruleField, data, condition, condition_value);
     } else {
-      sendFailResponse(res, field, data, condition, condition_value);
+      sendFailResponse(res, ruleField, data, condition, condition_value);
     }
   } else if (
     condition === 'gt' &&
@@ -177,9 +175,9 @@ exports.evaluateDataAndSendResult = (req, res) => {
     data !== undefined
   ) {
     if (parseInt(data) > condition_value) {
-      sendSuccessResponse(res, field, data, condition, condition_value);
+      sendSuccessResponse(res, ruleField, data, condition, condition_value);
     } else {
-      sendFailResponse(res, field, data, condition, condition_value);
+      sendFailResponse(res, ruleField, data, condition, condition_value);
     }
   } else if (
     condition === 'gte' &&
@@ -187,9 +185,9 @@ exports.evaluateDataAndSendResult = (req, res) => {
     data !== undefined
   ) {
     if (parseInt(data) >= condition_value) {
-      sendSuccessResponse(res, field, data, condition, condition_value);
+      sendSuccessResponse(res, ruleField, data, condition, condition_value);
     } else {
-      sendFailResponse(res, field, data, condition, condition_value);
+      sendFailResponse(res, ruleField, data, condition, condition_value);
     }
   } else if (
     condition === 'contains' &&
@@ -197,12 +195,19 @@ exports.evaluateDataAndSendResult = (req, res) => {
     data !== undefined
   ) {
     if (data.includes(condition_value)) {
-      sendSuccessResponse(res, field, data, condition, condition_value);
+      sendSuccessResponse(res, ruleField, data, condition, condition_value);
     } else {
-      sendFailResponse(res, field, data, condition, condition_value);
+      sendFailResponse(res, ruleField, data, condition, condition_value);
     }
+  } else if (
+    typeof dataObj === 'string' &&
+    ruleField !== dataObj &&
+    data === undefined
+  ) {
+    sendFailResponse(res, ruleField, data, condition, condition_value);
+    return;
   } else {
-    sendMissingDataError(res, field);
+    sendMissingDataError(res, ruleField);
     return;
   }
 };
