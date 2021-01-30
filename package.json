@@ -4,7 +4,7 @@
   "description": "Flutterwave Node.js assessment: Create a simple rule-validation API.",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon app.js"
+    "start": "node app.js"
   },
   "author": "Kenneth Jimmy",
   "license": "ISC",
